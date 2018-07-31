@@ -1,5 +1,9 @@
 download_egg_images <- function(out_path) {
   
+  if (file.exists(out_path)) {
+    stop(paste(out_path, "already exists."))
+  }
+  
   message("This function will download the egg images file from")
   message("Zenodo, uncompress it, and move it to")
   message(out_path)
@@ -18,13 +22,10 @@ download_egg_images <- function(out_path) {
     
     untar(tmpfile, compressed = 'gzip', exdir = tmpdir)
     flist <- list.files(tmpdir, pattern = "IMG")
-
-    if (file.exists(out_path)) {
-      stop(paste(out_path, "already exists."))
-    } else {
-      dir.create(out_path)
-      file.copy(paste0(tmpdir, "/", flist), to = out_path)
-    }
+    
+    dir.create(out_path)
+    suc <- file.copy(paste0(tmpdir, "/", flist), to = out_path)
+    message(paste("\negg images written to", out_path))
   } else {
     message("Cancelled.")
   }
