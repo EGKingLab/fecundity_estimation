@@ -13,7 +13,7 @@ library(readxl)
 library(cvTools)
 library(latex2exp)
 
-source("../heritability/ggplot_theme.R")
+source("ggplot_theme.R")
 ```
 
 ## Regression on handcounted images
@@ -23,12 +23,12 @@ linear_threshold <- 53
 
 # Load data for handcounts
 HC <- suppressWarnings(
-  read_excel("../../Data/Processed/feclife_with-image-ids.xlsx") %>% 
+  read_excel("../Data/feclife_with-image-ids.xlsx") %>% 
     dplyr::select(cameraid, handcount, training_set) %>% 
     filter(training_set == "yes")
 )
 
-load("../../Data/Processed/area_summation.Rda")
+load("../Data/area_summation.Rda")
 
 areas <- areas %>% 
   filter(lower_thresh == linear_threshold)
@@ -38,7 +38,7 @@ HC <- inner_join(HC, areas, by = "cameraid") %>%
   as.data.frame()
 
 # Load image dimensions and merge
-img_size <- read_csv("../../Data/Processed/image_dimensions.csv")
+img_size <- read_csv("../Data/image_dimensions.csv")
 HC <- left_join(HC, img_size, by = "cameraid")
 ```
 
@@ -48,35 +48,6 @@ Training image size
 HC %>% 
   ggplot(aes(img_size)) +
   geom_histogram()
-```
-
-## Examine possibly bad images
-
-```{r check_bad_images, eval=FALSE}
-plot_jpeg = function(path, add=FALSE) {
-  # https://stackoverflow.com/a/28729601/168137
-  require('jpeg')
-  jpg = readJPEG(path, native = TRUE) # read the file
-  res = dim(jpg)[2:1] # get the resolution, [x, y]
-  if (!add) # initialize an empty plot area if add==FALSE
-    plot(1, 1,
-         xlim = c(1, res[1]), ylim = c(1, res[2]),
-         asp = 1, type = 'n', xaxs = 'i',
-         yaxs = 'i', xaxt = 'n', yaxt = 'n',
-         xlab = '', ylab = '', bty = 'n', main = path)
-  rasterImage(jpg, 1, 1, res[1], res[2])
-}
-
-flagged_images <- HC %>% 
-  filter(area_linear > 2.5e05)
-
-basedir <- "../../../h2_fec_images/h2_thresh_images/"
-
-if (nrow(flagged_images) >= 1) {
-  for (ii in 1:nrow(flagged_images)) {
-    print(plot_jpeg(paste0(basedir, flagged_images$cameraid[ii])))
-  }
-}
 ```
 
 ## Prediction for all images
@@ -141,17 +112,17 @@ HC %>% ggplot(aes(x = handcount, y = lm_pred)) +
   geom_point()
 ```
 
-## Predict for new data
+## Predict for whole data set
 
 ```{r}
 suppressWarnings(
-  M <- read_excel("../../Data/Processed/feclife_with-image-ids.xlsx")
+  M <- read_excel("../Data/feclife_with-image-ids.xlsx") %>% 
+    mutate(drop_from_lifespan = if_else(is.na(drop_from_lifespan),
+                                        "no", drop_from_lifespan))
 )
 
-M$drop_from_lifespan[is.na(M$drop_from_lifespan)] <- "no"
-
 # Load areas
-load("../../Data/Processed/area_summation.Rda")
+load("../Data/area_summation.Rda")
 areas <- areas %>% 
   filter(lower_thresh == linear_threshold)
 
@@ -159,7 +130,7 @@ M <- left_join(M, areas, by = "cameraid") %>%
   filter(drop_from_lifespan == "no")
 
 # Load image dimensions and merge
-img_size <- read_csv("../../Data/Processed/image_dimensions.csv")
+img_size <- read_csv("../Data/image_dimensions.csv")
 M <- left_join(M, img_size, by = "cameraid") %>% 
   select(-lower_thresh, -drop_from_lifespan)
 
@@ -178,7 +149,8 @@ img_size %>%
 
 ```{r}
 ggplot(M, aes(predicted_count_linear)) +
-  geom_histogram(bins = 30)
+  geom_histogram(bins = 30) +
+  labs(x = "Predicted egg count", y = "count")
 ```
 
 Check high and low predicted eggs
@@ -195,57 +167,11 @@ M %>%
   arrange(predicted_count_linear)
 ```
 
-```{r eval=FALSE}
-M.low <- M %>% 
- select(cameraid, predicted_count_linear) %>% 
- arrange(predicted_count_linear)
-
-M.low <- M.low[1:300,]
-
-ee <- read_excel("../../Data/Processed/egg_notes_EGK.xlsx")
-ee$Image <- paste("IMG_", ee$Image, ".JPG", sep = "")
-ww <- which(M.low$cameraid %in% ee$Image)
-
-M.low <- M.low[-ww,]
-
-set.seed <- 8462
-set.zeros <- M.low[sample(seq(1, nrow(M.low)), 10) , ]
-```
-
-## Examine possibly bad images
-
-```{r check_bad_images_2, eval = TRUE}
-plot_jpeg = function(path, add=FALSE) {
-  # https://stackoverflow.com/a/28729601/168137
-  require('jpeg')
-  jpg = readJPEG(path, native = TRUE) # read the file
-  res = dim(jpg)[2:1] # get the resolution, [x, y]
-  if (!add) # initialize an empty plot area if add==FALSE
-    plot(1, 1,
-         xlim = c(1, res[1]), ylim = c(1, res[2]),
-         asp = 1, type = 'n', xaxs = 'i',
-         yaxs = 'i', xaxt = 'n', yaxt = 'n',
-         xlab = '', ylab = '', bty = 'n', main = path)
-  rasterImage(jpg, 1, 1, res[1], res[2])
-}
-
-flagged_images <- M %>% 
-  filter(predicted_count_linear > 2000)
-
-basedir <- "../../../h2_fec_images/h2_thresh_fecimages/"
-
-if (nrow(flagged_images) >= 1) {
-  for (ii in 1:nrow(flagged_images)) {
-    print(plot_jpeg(paste0(basedir, flagged_images$cameraid[ii])))
-  }
-}
-```
-
 # Save output for further filtering & analysis
 
 ```{r}
-save(M, file = "../../Data/Processed/predicted_egg_counts.rda")
-load("../../Data/Processed/predicted_egg_counts.rda")
+save(M, file = "../Data/predicted_egg_counts.rda")
+load("../Data/predicted_egg_counts.rda")
 ```
 
 # Visualize performance of model
@@ -268,18 +194,16 @@ p1 <- HG %>%
   my_theme
 p1
 
-save(p1, file = "../../Figures/egg_counter_figure/egg_count_area.Rda")
+save(p1, file = "../Figures/egg_count_area.Rda")
 
-p2 <- HC %>% 
-  ggplot(aes(x=sqrt(area), y=handcount)) +
-  geom_point(alpha=1/2)
-p2
+# Replace negative values with 0
+M$predicted_count_linear[M$predicted_count_linear < 0] <- 0
 
-p3 <- HC %>% 
-  ggplot(aes(y=lm_pred, x=handcount)) +
-  geom_point(alpha=1/2)
-p3
-
-plot_grid(p2,p3, ncol=2)
+p2 <- M %>%
+  ggplot(aes(predicted_count_linear)) +
+  geom_histogram(bins = 30) +
+  labs(x = "Predicted Egg Count", y = "Count") +
+  my_theme
+save(p2, file = "../Figures/predicted_egg_count.Rda")
 ```
 

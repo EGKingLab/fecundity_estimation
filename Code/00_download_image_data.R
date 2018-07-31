@@ -29,6 +29,3 @@ download_egg_images <- function(out_path) {
     message("Cancelled.")
   }
 }
-
-out_path <- "~/Desktop/egg_images"
-download_egg_images(out_path)

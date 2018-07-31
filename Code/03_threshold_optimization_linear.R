@@ -11,10 +11,10 @@ library(ggrepel)
 coarse <- TRUE
 
 # Load areas tibble
-load("../../Data/Processed/area_summation.Rda")
+load("../Data/area_summation.Rda")
 
 if (coarse) {
-  outfile <- "../../Data/Processed/threshold_optimization_linear_coarse.csv"
+  outfile <- "../Data/threshold_optimization_linear_coarse.csv"
   reps <- 1000  # Reps at each proportion
   iters <- 1000 # Iterations for each CV
   prop_data <- seq(0.5, 1.0, by = 0.1)
@@ -22,7 +22,7 @@ if (coarse) {
   prop_train <- seq(0.5, 0.9, by = 0.1)
   thresh_values <- seq(30, 150, by = 5)
 } else {
-  outfile <- "../../Data/Processed/threshold_optimization_linear_fine.csv"
+  outfile <- "../Data/threshold_optimization_linear_fine.csv"
   reps <- 1000  # Reps at each proportion
   iters <- 1000 # Iterations for each CV
   prop_data <- seq(0.5, 1.0, by = 0.1)
@@ -31,14 +31,14 @@ if (coarse) {
   thresh_values <- seq(50, 60, by = 1)
 }
 
-# areas estimated from thresholding, keep only rows corresponding to
+# Areas estimated from thresholding, keep only rows corresponding to
 # values for coarse or fine, respectively
 areas <- areas %>% 
   filter(lower_thresh %in% thresh_values)
 
-# handcounts used in training
+# Handcounts used in training
 actual <- suppressWarnings(
-  read_excel("../../Data/Processed/feclife_with-image-ids.xlsx") %>% 
+  read_excel("../Data/feclife_with-image-ids.xlsx") %>% 
     filter(training_set == "yes")
 )
 
@@ -55,7 +55,7 @@ actual <- actual %>%
 M <- full_join(areas, actual, by = "cameraid")
 
 # Load image dimensions and merge
-img_size <- read_csv("../../Data/Processed/image_dimensions.csv")
+img_size <- read_csv("../Data/image_dimensions.csv")
 
 M <- left_join(M, img_size, by = "cameraid")
 
@@ -160,3 +160,38 @@ CVs %>%
 CVs %>% 
   arrange(rMSD)
 
+## Figure
+
+outfile <- "../Data/threshold_optimization_linear_coarse.csv"
+CVs <- read_csv(outfile) %>% 
+  drop_na(r) %>% 
+  mutate(lower_f = factor(lower),
+         prop_train_f = factor(prop_train),
+         prop_data_f = factor(prop_data))
+coarse <- CVs %>%
+  filter(prop_train_f == 0.9) %>% 
+  ggplot(aes(lower_f, rMSD, color = prop_data_f)) +
+  geom_point(alpha = 0.5) +
+  scale_color_discrete(name = "Prop. Data") +
+  scale_x_discrete(breaks = seq(30, 150, by = 20)) +
+  theme(legend.position = c(0.75, 0.2),
+        legend.key.size = unit(0.5, 'lines'),
+        legend.text = element_text(size = 9)) +
+  labs(x = "Threshold Value", y = "Root Mean Squared Difference") +
+  my_theme
+save(coarse, file = "../Figures/coarse_CV.Rda")
+
+outfile <- "../Data/threshold_optimization_linear_fine.csv"
+CVs <- read_csv(outfile) %>% 
+  drop_na(r) %>% 
+  mutate(lower_f = factor(lower),
+         prop_train_f = factor(prop_train),
+         prop_data_f = factor(prop_data))
+fine <- CVs %>%
+  filter(prop_train_f == 0.9) %>% 
+  ggplot(aes(lower_f, rMSD, color = prop_data_f)) +
+  geom_point(alpha = 0.5) +
+  theme(legend.position = "none") +
+  labs(x = "Threshold Value", y = "Root Mean Squared Difference") +
+  my_theme
+save(fine, file = "../Figures/fine_CV.Rda")
