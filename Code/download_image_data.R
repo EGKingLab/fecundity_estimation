@@ -1,5 +1,8 @@
+# This function downloads the egg_images.tgz file from Zenodo to the
+# current R temporary directory, extracts the images, and moves
+# them to the directory specified by out_path
+
 download_egg_images <- function(out_path) {
-  
   if (file.exists(out_path)) {
     stop(paste(out_path, "already exists."))
   }
