@@ -22,6 +22,8 @@ P2 <- plot_grid(coarse, fine,
 P <- plot_grid(P1, P2,
                nrow = 2)
 ggsave(filename = "Figure_2.png", plot = P, width = 6.9, height = 6.9)
+ggsave(filename = "Figure_2.pdf", plot = P, width = 6.9, height = 6.9)
+ggsave(filename = "Figure_2.eps", plot = P, width = 6.9, height = 6.9)
 
 
 # Figure 3
@@ -34,3 +36,5 @@ P <- plot_grid(p1, p2,
                label_size = 10)
 P
 ggsave(filename = "Figure_3.png", plot = P, width = 4, height = 6.9)
+ggsave(filename = "Figure_3.pdf", plot = P, width = 4, height = 6.9)
+ggsave(filename = "Figure_3.eps", plot = P, width = 4, height = 6.9)
