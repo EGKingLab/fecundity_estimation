@@ -98,6 +98,20 @@ HC$lm_pred <- predict(fm_lm2)
 cor(HC$handcount, HC$lm_pred)
 
 mean(abs(HC$handcount - HC$lm_pred))
+
+HC_no_zero <- HC %>% filter(handcount > 50 & handcount < 350)
+mean(abs(HC_no_zero$lm_pred - HC_no_zero$handcount) / HC_no_zero$handcount)
+
+HC <- HC %>% 
+  mutate(d = abs(lm_pred - handcount))
+
+HC %>% 
+  # filter(handcount > 50 & handcount < 350) %>% 
+  ggplot(aes(y = d, x = handcount)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+
+summary(lm(d ~ handcount, HC))
 ```
 
 Training set images with predicted negative counts
