@@ -16,6 +16,7 @@ download_egg_images <- function(out_path) {
     title = "\nChoosing yes will download a ~5 gb file, which will be slow. Proceed?")
   
   if (resp == 1) {
+    message("If the download times out, you can download directly (e.g., from a browser) from:\nhttps://zenodo.org/record/1285237/files/egg_images.tgz")
     tmpdir <- tempdir()
     url <- "https://zenodo.org/record/1285237/files/egg_images.tgz"
     tmpfile <- paste0(tmpdir, "/", basename(url))

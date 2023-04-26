@@ -1,7 +1,7 @@
 library(tidyverse)
 library(jpeg)
 
-# Download images from Zenodo if neccesary
+# Download images from Zenodo if necessary
 # source("download_image_data.R")
 download_egg_images("~/egg_images")
 
